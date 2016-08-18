@@ -1,0 +1,62 @@
+import mechanize
+import cookielib
+import re
+import datetime
+from openpyxl import Workbook
+
+date = datetime.datetime.now()
+
+var = 0
+line = 0
+Season = 2
+
+Cookie1 = mechanize.Cookie(0,'leaderboard_season',str(Season-1),None,False,'mwomercs.com',False,False,'/profile/',True,False,None,True,None,None,{},False)
+
+cj = cookielib.CookieJar()
+br = mechanize.Browser()
+login_url = "https://mwomercs.com/profile/leaderboards?page=0&type=0"
+season_url = "https://mwomercs.com/profile/leaderboards?page=0&type=0"
+regex = '<td>(.+?)</td>'
+pattern = re.compile(regex)
+
+wb = Workbook()
+ws = wb.active
+
+br.set_cookiejar(cj)
+br.open(login_url)
+br.select_form(nr=0)
+br.form['email']='MWOLeaderboardBot@gmail.com'
+br.form['password']='MWObot3'
+br.submit()
+br.open(season_url)
+cj.set_cookie(Cookie1)
+
+while var<5000:
+    url = "https://mwomercs.com/profile/leaderboards?page=" +str(var) +"&type=0"
+    htmlfile = br.open(url)
+    htmltext = br.response().read()
+    table = re.findall(pattern,htmltext)
+    if len(table) < 1:
+        wb.save("Leaderboard_" +"Season_" +str(Season) +"_" +str(date.year) +"-" +str(date.month) +"-" +str(date.day) +"_" +str(date.hour) +"-" +str(date.minute) +".xlsx")
+        print "End Reached"
+        exit()
+    table.pop(0)
+    subtable = [table[i:i+9] for i in range(0, len(table), 10)]
+    while line<len(subtable):
+        cell_list = subtable[line]
+        ws['A' +str(line+1+(var*20))] = cell_list[0]
+        ws['B' +str(line+1+(var*20))] = cell_list[1]
+        ws['C' +str(line+1+(var*20))] = cell_list[2]
+        ws['D' +str(line+1+(var*20))] = cell_list[3]
+        ws['E' +str(line+1+(var*20))] = cell_list[4]
+        ws['F' +str(line+1+(var*20))] = cell_list[5]
+        ws['G' +str(line+1+(var*20))] = cell_list[6]
+        ws['H' +str(line+1+(var*20))] = cell_list[7]
+        ws['I' +str(line+1+(var*20))] = cell_list[8]
+        line+=1
+        print cell_list
+    line = 0
+    var+=1
+    print var
+wb.save("Leaderboard_" +"Season_" +str(Season) +"_" +str(date.year) +"-" +str(date.month) +"-" +str(date.day) +"_" +str(date.hour) +"-" +str(date.minute) +"-ControlTest" +".xlsx")
+print "Controlled End Reached"
